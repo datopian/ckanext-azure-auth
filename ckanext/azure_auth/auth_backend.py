@@ -123,12 +123,12 @@ class AdfsAuthBackend(object):
                 log.info(str(error))
                 raise PermissionError
 
-    def process_access_token(self, access_token, adfs_response=None):
+    def process_access_token(self, access_token, id_token=None):
         if not access_token:
             raise PermissionError
 
         log.debug(f'Received access token: {access_token}')
-        claims = self.validate_access_token(adfs_response['id_token'])
+        claims = self.validate_access_token(id_token)
         if not claims:
             raise PermissionError
 
@@ -150,13 +150,13 @@ class AdfsAuthBackend(object):
             log.error(f"User claim's doesn't have the claim 'oid' in his claims: {claims}")
             raise PermissionError
 
-        email = claims.get('unique_name')
+        email = claims.get('email')
         ckan_id = f'{AUTH_SERVICE}-{user_id}'
-        username = self.sanitize_username(claims.get('name', ckan_id))
+        username = self.sanitize_username(email.split('@')[0])
         fullname = f'{claims["given_name"]} {claims["family_name"]}'
 
         try:
-            user = toolkit.get_action('user_show')(data_dict={'id': ckan_id})
+            user = toolkit.get_action('user_show')(data_dict={'id': username})
             log.debug(f"User found --> {user}")
             dirty = False
             if user['name'] != username:
@@ -177,7 +177,6 @@ class AdfsAuthBackend(object):
                 user = toolkit.get_action('user_create')(
                     context={'ignore_auth': True},
                     data_dict={
-                        'id': ckan_id,
                         'name': username,
                         'fullname': fullname,
                         'password': str(uuid.uuid4()),
@@ -217,13 +216,16 @@ class AdfsAuthBackend(object):
 
         # If there's no token or code, we pass control to the next
         # authentication backend
-        if not bool(authorization_code):
+        if not authorization_code:
             log.debug('No authorization code was received')
             return
 
         adfs_response = self.exchange_auth_code(authorization_code)
-        access_token = adfs_response['access_token']
-        user = self.process_access_token(access_token, adfs_response)
+        access_token = adfs_response.pop('access_token')
+        id_token = adfs_response.pop('id_token')
+        session[f'{ADFS_SESSION_PREFIX}adfs_response'] = adfs_response
+        session.save()
+        user = self.process_access_token(access_token, id_token)
         return user
 
     def authenticate_with_token(self, access_token=None, **kwargs):

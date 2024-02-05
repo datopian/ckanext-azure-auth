@@ -126,7 +126,11 @@ class AzureAuthPlugin(plugins.SingletonPlugin):
         def get_attrib(key):
             if key not in RENDERABLE_ATTRS:
                 raise NotAuthorized('Attribute is not accessible')
-            return get_action('config_option_show')({'ignore_auth': True}, {'key': key})
+            try:
+                return get_action('config_option_show')({'ignore_auth': True}, {'key': key})
+            except Exception as e:
+                log.error(f'Error while getting config option: {e}')
+                return
 
         try:
             provider_config = ProviderConfig()

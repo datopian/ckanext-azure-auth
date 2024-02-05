@@ -6,10 +6,11 @@ import logging
 
 import requests
 
-import ckan.plugins.toolkit as toolkit
+from flask_login import login_user
+
 from ckan.common import _, g, request, session
 from ckan.lib import base, helpers
-from ckan.model import State
+import ckan.model as model
 from ckanext.azure_auth.auth_backend import AdfsAuthBackend
 from ckanext.azure_auth.auth_config import ADFS_SESSION_PREFIX, ProviderConfig
 from ckanext.azure_auth.exceptions import (
@@ -28,12 +29,14 @@ def login_callback():
     Handles ADFS callback
     received auth code or auth tokens
     '''
-    code = request.params.get('code')
+    code = request.params.get('code') or request.args.get('code')
     provider_config = ProviderConfig()
     auth_backend = AdfsAuthBackend(provider_config=provider_config)
 
     try:
         user = auth_backend.authenticate_with_code(authorization_code=code)
+        user_obj = model.User.get(user['name'])
+        login_user(user_obj)
     except MFARequiredException:
         return helpers.redirect_to(
             provider_config.build_authorization_endpoint(
@@ -51,25 +54,12 @@ def login_callback():
         base.abort(400, 'No authorization code was provided.')
 
     if user:
-        if user['state'] == State.ACTIVE:
+        if user['state'] == 'active':
             g.user = user['name']
             session[f'{ADFS_SESSION_PREFIX}user'] = user['name']
             session.save()
 
-            # Redirect to the "after login" page.
-            # Because we got redirected from ADFS, we can't know where the
-            # user came from.
-
-            redirect_to = request.params.get('state')
-            if redirect_to:
-                redirect_to = base64.urlsafe_b64decode(
-                    redirect_to.encode()
-                ).decode()
-            else:
-                toolkit.redirect_to(controller='user', action='dashboard')
-
-            # TODO: validate URL
-            return toolkit.redirect_to(redirect_to)
+            return helpers.redirect_to('user.me')
         else:
             # Return a 'disabled account' error message
             base.abort(403, 'Your account is disabled.')
