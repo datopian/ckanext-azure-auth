@@ -6,6 +6,7 @@ import jwt
 
 from ckan.common import _, config, session
 from ckan.lib.munge import substitute_ascii_equivalents
+from ckan.lib import munge
 from ckan.logic import NotFound
 from ckan.plugins import toolkit
 from ckanext.azure_auth.auth_config import (
@@ -150,10 +151,9 @@ class AdfsAuthBackend(object):
             log.error(f"User claim's doesn't have the claim 'oid' in his claims: {claims}")
             raise PermissionError
 
-        email = claims.get('email')
-        ckan_id = f'{AUTH_SERVICE}-{user_id}'
-        username = self.sanitize_username(email.split('@')[0])
-        fullname = f'{claims["given_name"]} {claims["family_name"]}'
+        email = claims.get('email').lower()
+        username = munge.munge_name(email.split('@')[0])
+        fullname = claims.get('name')
 
         try:
             user = toolkit.get_action('user_show')({'ignore_auth': True}, {'id': username})
@@ -165,6 +165,7 @@ class AdfsAuthBackend(object):
             if user['fullname'] != fullname:
                 log.info(f"Resetting fullname from [{user['fullname']}] to [{fullname}]")
                 user['fullname'] = fullname
+                user['display_name'] = fullname
                 dirty = True
             if dirty:
                 # set some fields required when saving
