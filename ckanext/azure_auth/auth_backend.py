@@ -151,7 +151,14 @@ class AdfsAuthBackend(object):
             log.error(f"User claim's doesn't have the claim 'oid' in his claims: {claims}")
             raise PermissionError
 
-        email = claims.get('email').lower()
+        email = claims.get('email', claims.get('unique_name'))
+
+        if not email or '@' not in email:
+            log.error(f'Email address not found in user claims: {claims}')
+            raise PermissionError
+        else:
+            email = email.lower()
+
         username = munge.munge_name(email.split('@')[0])
         fullname = claims.get('name')
 
