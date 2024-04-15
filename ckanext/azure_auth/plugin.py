@@ -6,6 +6,7 @@ from ckan.common import g, session
 from ckan.exceptions import CkanConfigurationException
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
+import ckanext.azure_auth.helpers as aa_helpers
 
 from ckanext.azure_auth.auth_config import (
     AUTH_SERVICE,
@@ -148,6 +149,7 @@ class AzureAuthPlugin(plugins.SingletonPlugin):
             'adfs_authentication_endpoint': adfs_authentication_endpoint,
             'adfs_authentication_endpoint_error': adfs_authentication_endpoint_error,
             'adfs_get_attrib': get_attrib,
+            'get_config_value': aa_helpers.get_config_value,
         }
 
     def get_blueprint(self):

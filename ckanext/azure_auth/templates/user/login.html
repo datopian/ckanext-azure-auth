@@ -1,5 +1,7 @@
 {% ckan_extends %}
 
+{% set hide_standard_login = h.get_config_value('ckanext.azure_auth.hide_standard_login', False) %}
+
 {% block styles %}
   {{ super() }}
   <link rel="stylesheet" href="/css/azure-auth.css" />
@@ -34,16 +36,56 @@
       </fieldset>
     </div>
 
-    <div class="login-block ckan">
-      <fieldset>
-        <legend>
-          {{ _('Use your {site_title} username and password').format(site_title=g.site_title) }}
-        </legend>
-        {% block form %}
-          {% snippet "user/snippets/login_form.html", error_summary=error_summary %}
-        {% endblock %}
-      </fieldset>
-    </div>
+    {% if hide_standard_login != 'True' %}
+      <div class="login-block ckan">
+        <fieldset>
+          <legend>
+            {{ _('Use your {site_title} username and password').format(site_title=g.site_title) }}
+          </legend>
+          {% block form %}
+            {% snippet "user/snippets/login_form.html", error_summary=error_summary %}
+          {% endblock %}
+        </fieldset>
+      </div>
+    {% endif %}
     </div>
   </section>
+{% endblock %}
+
+{% block secondary_content %}
+  {% if hide_standard_login != 'True' %}
+    {% if h.check_access('user_create') %}
+    {% block help_register %}
+    <section class="module module-narrow module-shallow">
+      {% block help_register_inner %}
+        <h2 class="module-heading">{{ _('Need an Account?') }}</h2>
+        <div class="module-content">
+          <p>{% trans %}Then sign right up, it only takes a minute.{% endtrans %}</p>
+          <p class="action">
+          {% block help_register_button %}
+            <a class="btn btn-default" href="{{ h.url_for('user.register') }}">{{ _('Create an Account') }}</a>
+          {% endblock %}
+          </p>
+        </div>
+      {% endblock %}
+    </section>
+    {% endblock %}
+    {% endif %}
+
+    {% block help_forgotten %}
+    <section class="module module-narrow module-shallow">
+      {% block help_forgotten_inner %}
+      <h2 class="module-heading">{{ _('Forgotten your password?') }}</h2>
+      <div class="module-content">
+        <p>{% trans %}No problem, use our password recovery form to reset it.{% endtrans %}</p>
+        <p class="action">
+          {% block help_forgotten_button %}
+          <a class="btn btn-default" href="{{ h.url_for('user.request_reset') }}">{{ _('Forgot your password?') }}</a>
+          {% endblock %}
+        </p>
+      </div>
+      {% endblock %}
+    </section>
+    {% endblock %}
+  {% endif %}
 {% endblock %}
