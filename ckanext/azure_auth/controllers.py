@@ -8,7 +8,7 @@ import requests
 
 from flask_login import login_user
 
-from ckan.common import _, g, request, session
+from ckan.common import _, g, request, session, config
 from ckan.lib import base, helpers
 import ckan.model as model
 from ckanext.azure_auth.auth_backend import AdfsAuthBackend
@@ -59,7 +59,7 @@ def login_callback():
             session[f'{ADFS_SESSION_PREFIX}user'] = user['name']
             session.save()
 
-            return helpers.redirect_to('user.me')
+            return helpers.redirect_to(config.get('ckanext.azure_auth.login_redirect_blueprint', 'user.me'))
         else:
             # Return a 'disabled account' error message
             base.abort(403, 'Your account is disabled.')

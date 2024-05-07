@@ -99,6 +99,15 @@ been our experience that their otherwise excellent documentation doesn't
 always stay up-to-date and/or Google doesn't point to the most current version
 of the documentation. YMMV.
 
+### Optional settings
+
+```ini
+ckanext.azure_auth.login_redirect_blueprint=user.me # default - this is the final destination after login. Example override for redirecting to the home page would be: `ckanext.azure_auth.login_redirect_blueprint=home`
+ckanext.azure_auth.hide_standard_login=False # default - this will hide the standard login form, only allowing Azure AD login. It also hides the "Need an Account?" and "Forgotten your password?" sections.
+ckanext.azure_auth.login_help=False # default - set to True to show a help message on the login page
+ckanext.azure_auth.login_help_text='For employees, click the Login button above to sign in with the company AD account.' # default - set to a string to show a custom help message on the login page
+```
+
 Development Environment:
 ------------------------
 
