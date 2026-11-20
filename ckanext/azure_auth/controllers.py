@@ -49,15 +49,16 @@ def login_callback():
     except (AzureReloginRequiredException, RuntimeIssueException) as e:
         log.debug(str(e))
         base.abort(403, str(e))
-    except Exception as e:
-        log.debug(str(e))
+    except Exception:
+        log.exception('Azure login callback failed')
         base.abort(400, 'No authorization code was provided.')
 
     if user:
         if user['state'] == 'active':
             g.user = user['name']
+            # Flask marks the session as modified on item assignment;
+            # CKAN >= 2.11 sessions have no .save() method.
             session[f'{ADFS_SESSION_PREFIX}user'] = user['name']
-            session.save()
 
             return helpers.redirect_to(config.get('ckanext.azure_auth.login_redirect_blueprint', 'user.me'))
         else:

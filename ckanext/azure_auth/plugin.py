@@ -199,7 +199,6 @@ class AzureAuthPlugin(plugins.SingletonPlugin):
         if keys_to_delete:
             for key in keys_to_delete:
                 del session[key]
-            session.save()
 
     def abort(self, status_code, detail, headers, comment):
         return status_code, detail, headers, comment

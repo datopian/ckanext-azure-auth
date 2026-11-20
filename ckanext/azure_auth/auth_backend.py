@@ -4,14 +4,13 @@ import re
 
 import jwt
 
-from ckan.common import _, config, session
+from ckan.common import _, config
 from ckan.lib.munge import substitute_ascii_equivalents
 from ckan.lib import munge
 from ckan.logic import NotFound
 from ckan.plugins import toolkit
 from ckanext.azure_auth.auth_config import (
     ADFS_CREATE_USER,
-    ADFS_SESSION_PREFIX,
     ATTR_ADSF_AUDIENCE,
     ATTR_CLIENT_ID,
     ATTR_CLIENT_SECRET,
@@ -76,10 +75,10 @@ class AdfsAuthBackend(object):
             )
             raise PermissionError
 
-        adfs_response = response.json()
-        session[f'{ADFS_SESSION_PREFIX}tokens'] = adfs_response
-        session.save()
-        return adfs_response
+        # Tokens are intentionally not stored in the session: since CKAN 2.11
+        # the session is a client-side (signed, not encrypted) cookie, and
+        # nothing reads them back.
+        return response.json()
 
     def validate_access_token(self, access_token):
         for idx, key in enumerate(self.provider_config.signing_keys):
@@ -231,8 +230,6 @@ class AdfsAuthBackend(object):
         adfs_response = self.exchange_auth_code(authorization_code)
         access_token = adfs_response.pop('access_token')
         id_token = adfs_response.pop('id_token')
-        session[f'{ADFS_SESSION_PREFIX}adfs_response'] = adfs_response
-        session.save()
         user = self.process_access_token(access_token, id_token)
         return user
 
