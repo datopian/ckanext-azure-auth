@@ -82,7 +82,7 @@ class ProviderConfig(object):
             read=retries,
             connect=retries,
             backoff_factor=0.3,
-            method_whitelist=method_whitelist,
+            allowed_methods=method_whitelist,
         )
 
         self.session = requests.Session()

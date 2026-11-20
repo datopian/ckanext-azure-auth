@@ -20,17 +20,6 @@ from ckanext.azure_auth.auth_config import (
 azure_admin_blueprint = Blueprint(u'azure_admin', __name__)
 
 
-def build_extra_admin_nav():
-    u'''Return results of helpers.build_extra_admin_nav for testing.'''
-    return helpers.build_extra_admin_nav()
-
-
-azure_admin_blueprint.add_url_rule(
-    u'/build_extra_admin_nav',
-    view_func=build_extra_admin_nav
-)
-
-
 @azure_admin_blueprint.before_request
 def check_for_sysadmin():
     try:

@@ -53,11 +53,9 @@ class AzureAuthPlugin(plugins.SingletonPlugin):
         toolkit.add_template_directory(config, 'templates')
         toolkit.add_public_directory(config, 'public')
 
-        toolkit.add_ckan_admin_tab(config, 'azure_admin.azure_auth_config', 'ADFS', icon='windows')
-
         if ATTR_TENANT_ID in config:
             # If a tenant ID was set, switch to Azure AD mode
-            if ATTR_AD_SERVER in config:
+            if config.get(ATTR_AD_SERVER) not in (None, '', AZURE_AD_SERVER_URL):
                 msg = f'The {ATTR_AD_SERVER} should not be set when {ATTR_TENANT_ID} is set.'
                 raise CkanConfigurationException(msg)
             config[ATTR_AD_SERVER] = AZURE_AD_SERVER_URL
